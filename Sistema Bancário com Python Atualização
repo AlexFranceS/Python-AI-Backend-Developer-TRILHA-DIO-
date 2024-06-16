@@ -1,0 +1,183 @@
+class Usuario:
+    def __init__(self, cpf, nome, data_nascimento, endereco):
+        self.cpf = cpf
+        self.nome = nome
+        self.data_nascimento = data_nascimento
+        self.endereco = endereco
+        self.contas = []
+
+class Conta:
+    numero_conta_sequencial = 1
+
+    def __init__(self, usuario):
+        self.agencia = "0001"
+        self.numero_conta = Conta.numero_conta_sequencial
+        self.usuario = usuario
+        self.saldo = 0
+        self.extrato = ""
+        self.numero_saques = 0
+        Conta.numero_conta_sequencial += 1
+
+    def depositar(self, valor):
+        if valor > 0:
+            self.saldo += valor
+            self.extrato += f"Depósito: R$ {valor:.2f}\n"
+            return True
+        else:
+            print("Operação falhou! O valor informado é inválido.")
+            return False
+
+    def sacar(self, valor, limite=500, limite_saques=3):
+        if valor <= 0:
+            print("Operação falhou! O valor informado é inválido.")
+            return False
+
+        if valor > self.saldo:
+            print("Saldo insuficiente.")
+            return False
+
+        if valor > limite:
+            print("Limite excedido.")
+            return False
+
+        if self.numero_saques >= limite_saques:
+            print("Limite de saques diários excedido.")
+            return False
+
+        self.saldo -= valor
+        self.extrato += f"Saque: R$ {valor:.2f}\n"
+        self.numero_saques += 1
+        print("Saque liberado. Retire o dinheiro.")
+        return True
+
+    def imprimir_extrato(self):
+        print("Extrato")
+        print("Não foram realizadas movimentações." if not self.extrato else self.extrato)
+        print(f"\n Saldo: R$ {self.saldo:.2f}")
+        print("Extrato")
+
+
+def criar_usuario(usuarios):
+    cpf = input("Digite o CPF (apenas números): ")
+    if cpf in usuarios:
+        print("CPF já cadastrado!")
+        return None
+    
+    nome = input("Digite o nome: ")
+    data_nascimento = input("Digite a data de nascimento (DD/MM/AAAA): ")
+    endereco = input("Digite o endereço: ")
+    
+    usuario = Usuario(cpf, nome, data_nascimento, endereco)
+    usuarios[cpf] = usuario
+    print("Usuário cadastrado com sucesso!")
+    return usuario
+
+
+def criar_conta(usuario):
+    conta = Conta(usuario)
+    usuario.contas.append(conta)
+    print(f"Conta criada com sucesso! Agência: {conta.agencia}, Conta: {conta.numero_conta}")
+    return conta
+
+
+def selecionar_conta(usuario):
+    if not usuario.contas:
+        print("Usuário não possui contas!")
+        return None
+
+    print("Selecione uma conta:")
+    for i, conta in enumerate(usuario.contas):
+        print(f"[{i}] Agência: {conta.agencia}, Conta: {conta.numero_conta}")
+    
+    indice = int(input("Digite o número da conta: "))
+    if 0 <= indice < len(usuario.contas):
+        return usuario.contas[indice]
+    else:
+        print("Conta inválida!")
+        return None
+
+
+def listar_contas(usuario):
+    if not usuario.contas:
+        print("Usuário não possui conta cadastrada!")
+    else:
+        print(f"Contas do usuário {usuario.nome}:")
+        for conta in usuario.contas:
+            print(f"Agência: {conta.agencia}, Conta: {conta.numero_conta}, Saldo: R$ {conta.saldo:.2f}")
+
+
+def main():
+    menu = """
+    =================  Menu  ==================
+    [1] Cadastrar Usuário
+    [2] Criar Conta
+    [3] Selecionar Conta
+    [4] Depositar
+    [5] Sacar
+    [6] Extrato
+    [7] Listar Contas
+    [0] Sair
+    """
+    
+    usuarios = {}
+    conta_selecionada = None
+
+    while True:
+        opcao = input(menu)
+
+        if opcao == "1":
+            criar_usuario(usuarios)
+
+        elif opcao == "2":
+            cpf = input("Digite o CPF do usuário: ")
+            usuario = usuarios.get(cpf)
+            if usuario:
+                criar_conta(usuario)
+            else:
+                print("Usuário não encontrado!")
+
+        elif opcao == "3":
+            cpf = input("Digite o CPF do usuário: ")
+            usuario = usuarios.get(cpf)
+            if usuario:
+                conta_selecionada = selecionar_conta(usuario)
+            else:
+                print("Usuário não encontrado!")
+
+        elif opcao == "4":
+            if conta_selecionada:
+                valor = float(input("Qual valor deseja depositar? R$ "))
+                conta_selecionada.depositar(valor)
+            else:
+                print("Nenhuma conta selecionada!")
+
+        elif opcao == "5":
+            if conta_selecionada:
+                valor = float(input("Informe o valor do saque: R$ "))
+                conta_selecionada.sacar(valor)
+            else:
+                print("Nenhuma conta selecionada!")
+
+        elif opcao == "6":
+            if conta_selecionada:
+                conta_selecionada.imprimir_extrato()
+            else:
+                print("Nenhuma conta selecionada!")
+
+        elif opcao == "7":
+            cpf = input("Digite o CPF do usuário: ")
+            usuario = usuarios.get(cpf)
+            if usuario:
+                listar_contas(usuario)
+            else:
+                print("Usuário não encontrado!")
+
+        elif opcao == "0":
+            break
+
+        else:
+            print("Operação inválida, por favor selecione novamente a operação desejada.")
+
+
+if __name__ == "__main__":
+    main()
